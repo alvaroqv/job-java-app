@@ -1,0 +1,451 @@
+Put your HTML text <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobManager v3.0 - Final</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; overflow-x: hidden; }
+        
+        /* Sidebar Styling */
+        .sidebar { min-height: 100vh; background-color: #343a40; color: #fff; width: 250px; position: fixed; z-index: 1000; display: flex; flex-direction: column; }
+        .sidebar .nav-link { color: #cfd2d6; margin-bottom: 5px; cursor: pointer; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background-color: #0d6efd; }
+        .sidebar .brand { font-size: 1.5rem; font-weight: bold; padding: 20px; text-align: center; border-bottom: 1px solid #4b545c; }
+        .user-profile { padding: 15px; border-top: 1px solid #4b545c; background-color: #2c3136; }
+        
+        /* Main Content */
+        .main-content { margin-left: 250px; padding: 20px; width: calc(100% - 250px); }
+
+        /* Cards & UI Elements */
+        .stat-card { border-left: 4px solid; transition: all 0.2s; cursor: pointer; }
+        .stat-card:hover, .stat-card.active-filter { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); background-color: #fff; }
+        .border-blue { border-color: #0d6efd; }
+        .border-green { border-color: #198754; }
+        .border-red { border-color: #dc3545; }
+        .border-cyan { border-color: #0dcaf0; }
+
+        /* Wizard Steps */
+        .step-indicator { display: flex; justify-content: space-between; margin-bottom: 20px; position: relative; }
+        .step-indicator::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 2px; background: #e9ecef; z-index: 0; }
+        .step { width: 35px; height: 35px; border-radius: 50%; background: #e9ecef; color: #6c757d; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 1; position: relative; }
+        .step.active { background: #0d6efd; color: white; }
+        
+        .code-editor { background-color: #1e1e1e; color: #d4d4d4; font-family: monospace; }
+        .hidden-row { display: none !important; }
+        
+        /* Checkboxes Dias da Semana */
+        .day-check + label { cursor: pointer; }
+        .day-check:checked + label { background-color: #0d6efd; color: white; border-color: #0d6efd; }
+    </style>
+</head>
+<body>
+
+    <div class="d-flex">
+        <div class="sidebar">
+            <div class="brand mb-4"><i class="fas fa-robot me-2"></i>JobManager</div>
+            
+            <ul class="nav nav-pills flex-column mb-auto p-3">
+                <li class="nav-item">
+                    <a class="nav-link active" onclick="switchTab('dashboard')"><i class="fas fa-tachometer-alt me-2"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('jobs')"><i class="fas fa-tasks me-2"></i> Meus Jobs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('history')"><i class="fas fa-folder-open me-2"></i> Relatórios</a>
+                </li>
+                <li class="nav-item mt-4">
+                    <small class="text-uppercase text-muted ms-2" style="font-size: 0.75rem;">Administração</small>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="switchTab('connections')"><i class="fas fa-database me-2"></i> Conexões</a>
+                </li>
+            </ul>
+
+            <div class="user-profile mt-auto">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2 text-white" style="width: 38px; height: 38px;">
+                        <strong>US</strong>
+                    </div>
+                    <div class="text-white small lh-1">
+                        <strong>Usuario Silva</strong><br>
+                        <span class="text-muted" style="font-size: 0.8rem;">Perfil: Executor</span>
+                    </div>
+                    <div class="ms-auto">
+                        <button class="btn btn-sm btn-dark text-muted"><i class="fas fa-cog"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                <h4 class="m-0 text-secondary" id="pageTitle">Visão Geral</h4>
+                <div>
+                    <button class="btn btn-outline-dark btn-sm"><i class="fas fa-sign-out-alt"></i> Sair</button>
+                </div>
+            </div>
+
+            <div id="view-dashboard" class="view-section">
+                <div class="row mb-4">
+                    <div class="col-md-3"><div class="card shadow-sm stat-card border-blue" onclick="filterDashboard('running', this)"><div class="card-body"><h6 class="text-muted">Em Execução</h6><h3>03</h3></div></div></div>
+                    <div class="col-md-3"><div class="card shadow-sm stat-card border-green" onclick="filterDashboard('success', this)"><div class="card-body"><h6 class="text-muted">Sucesso (24h)</h6><h3>142</h3></div></div></div>
+                    <div class="col-md-3"><div class="card shadow-sm stat-card border-red" onclick="filterDashboard('error', this)"><div class="card-body"><h6 class="text-muted">Falhas (24h)</h6><h3>02</h3></div></div></div>
+                    <div class="col-md-3"><div class="card shadow-sm stat-card border-cyan" onclick="filterDashboard('all', this)"><div class="card-body"><h6 class="text-muted">Todos Jobs</h6><h3>Ver Tudo</h3></div></div></div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white"><h5>Execuções Recentes</h5></div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0 align-middle" id="dashboardTable">
+                            <thead class="table-light"><tr><th>Status</th><th>Nome do Job</th><th>Área</th><th>Início</th><th class="text-end">Ações</th></tr></thead>
+                            <tbody>
+                                <tr data-status="success"><td><span class="badge bg-success">Sucesso</span></td><td>Relatório Vendas</td><td>Comercial</td><td>30/11 14:00</td><td class="text-end"><button class="btn btn-sm btn-outline-secondary" title="Ver Log"><i class="fas fa-file-alt"></i></button></td></tr>
+                                <tr data-status="error"><td><span class="badge bg-danger">Erro</span></td><td>Sync Estoque</td><td>Logística</td><td>30/11 13:55</td><td class="text-end"><button class="btn btn-sm btn-outline-danger" title="Ver Erro"><i class="fas fa-exclamation-triangle"></i></button></td></tr>
+                                <tr data-status="running"><td><span class="badge bg-primary spinner-grow-sm">Running</span></td><td>Fechamento</td><td>Financ.</td><td>30/11 13:50</td><td class="text-end"><button class="btn btn-sm btn-outline-secondary" title="Detalhes"><i class="fas fa-eye"></i></button></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-jobs" class="view-section d-none">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5>Gerenciar Tarefas</h5>
+                    <button class="btn btn-primary" onclick="openWizard('new')"><i class="fas fa-plus"></i> Novo Job</button>
+                </div>
+                <div class="card shadow-sm">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light"><tr><th>Nome</th><th>Tipo</th><th>CRON</th><th class="text-end">Ações</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td>Relatório Vendas</td><td><span class="badge bg-info text-dark">SQL</span></td><td>0 8 * * 1</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-success me-1" title="Executar Agora" data-bs-toggle="modal" data-bs-target="#runModal"><i class="fas fa-play"></i></button>
+                                    <button class="btn btn-sm btn-outline-primary me-1" title="Editar Job" onclick="openWizard('edit')"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" title="Excluir Job" data-bs-toggle="modal" data-bs-target="#deleteModal"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="view-wizard" class="view-section d-none">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="m-0" id="wizardTitle">Criar Novo Job</h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="switchTab('jobs')">Cancelar</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="step-indicator px-5">
+                            <div class="step active" id="stepIcon1">1</div>
+                            <div class="step" id="stepIcon2">2</div>
+                            <div class="step" id="stepIcon3">3</div>
+                        </div>
+                        
+                        <div id="step1" class="wizard-step">
+                            <h6 class="text-center mb-4">Dados Básicos</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6"><label class="form-label">Nome do Job</label><input type="text" class="form-control" id="jobNameInput"></div>
+                                <div class="col-md-6"><label class="form-label">Área</label><select class="form-select"><option>Financeiro</option><option>TI</option></select></div>
+                                <div class="col-12"><label class="form-label">Tipo de Job</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="jobType" id="typeSQL" value="sql" checked onchange="toggleJobType()"><label class="form-check-label" for="typeSQL">Query SQL</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="jobType" id="typePython" value="python" onchange="toggleJobType()"><label class="form-check-label" for="typePython">Script Python</label></div>
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-4">
+                                    <label class="form-label fw-bold">Parâmetros de Entrada</label>
+                                    <div class="table-responsive border rounded p-2 bg-light">
+                                        <table class="table table-sm mb-0">
+                                            <thead><tr><th>Nome Param</th><th>Tipo</th><th>Valor Padrão</th><th>Ação</th></tr></thead>
+                                            <tbody id="paramsBody">
+                                                <tr><td><input type="text" class="form-control form-control-sm" value="data_ref"></td><td><select class="form-select form-select-sm"><option>Data</option></select></td><td><input type="text" class="form-control form-control-sm"></td><td><button class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button></td></tr>
+                                            </tbody>
+                                        </table>
+                                        <button class="btn btn-sm btn-link text-decoration-none" onclick="addParamRow()">+ Adicionar Parâmetro</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="step2" class="wizard-step d-none">
+                            <div id="container-sql">
+                                <h6 class="text-center mb-4">Configurar Query SQL</h6>
+                                <div class="mb-3"><label>Conexão</label><select class="form-select w-50"><option>Oracle Prod</option></select></div>
+                                <div class="mb-3"><label>Query</label><textarea class="form-control code-editor" rows="4">SELECT * FROM tabela WHERE dt = :data_ref</textarea></div>
+                                
+                                <button class="btn btn-sm btn-outline-primary mb-3" onclick="validarColunasSQL()"><i class="fas fa-sync"></i> Validar & Mapear Colunas</button>
+                                
+                                <div id="sqlResultTable" class="d-none border rounded p-3 bg-light">
+                                    <label class="fw-bold mb-2 text-success"><i class="fas fa-check-circle"></i> Colunas Detectadas:</label>
+                                    <table class="table table-bordered table-sm bg-white">
+                                        <thead><tr><th>Coluna SQL</th><th>Alias Relatório</th><th>Formato</th></tr></thead>
+                                        <tbody>
+                                            <tr><td>data_venda</td><td><input type="text" class="form-control form-control-sm" value="Data Venda"></td><td><select class="form-select form-select-sm"><option>DD/MM/AAAA</option></select></td></tr>
+                                            <tr><td>valor</td><td><input type="text" class="form-control form-control-sm" value="Valor"></td><td><select class="form-select form-select-sm"><option>Moeda R$</option></select></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div id="container-python" class="d-none">
+                                <h6 class="text-center mb-4">Configurar Script Python</h6>
+                                <select class="form-select mb-3"><option>etl_mensal.py</option></select>
+                            </div>
+                        </div>
+
+                        <div id="step3" class="wizard-step d-none">
+                            <h6 class="text-center mb-4">Agendamento & Notificações</h6>
+                            
+                            <div class="form-check form-switch mb-4 p-3 border rounded bg-light">
+                                <input class="form-check-input" type="checkbox" id="scheduleSwitch" onchange="toggleSchedule()" checked>
+                                <label class="form-check-label fw-bold" for="scheduleSwitch">Execução Automática (Agendada)</label>
+                            </div>
+
+                            <div id="scheduleOptions">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label d-block">Dias da Execução:</label>
+                                        <div class="btn-group" role="group">
+                                            <input type="checkbox" class="btn-check day-check" id="dSeg" checked> <label class="btn btn-outline-secondary btn-sm" for="dSeg">Seg</label>
+                                            <input type="checkbox" class="btn-check day-check" id="dTer" checked> <label class="btn btn-outline-secondary btn-sm" for="dTer">Ter</label>
+                                            <input type="checkbox" class="btn-check day-check" id="dQua" checked> <label class="btn btn-outline-secondary btn-sm" for="dQua">Qua</label>
+                                            <input type="checkbox" class="btn-check day-check" id="dQui" checked> <label class="btn btn-outline-secondary btn-sm" for="dQui">Qui</label>
+                                            <input type="checkbox" class="btn-check day-check" id="dSex" checked> <label class="btn btn-outline-secondary btn-sm" for="dSex">Sex</label>
+                                            <input type="checkbox" class="btn-check day-check" id="dSab"> <label class="btn btn-outline-secondary btn-sm" for="dSab">Sab</label>
+                                            <input type="checkbox" class="btn-check day-check" id="dDom"> <label class="btn btn-outline-secondary btn-sm" for="dDom">Dom</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Horário de Início:</label>
+                                        <input type="time" class="form-control" value="08:00">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Intervalo de Repetição:</label>
+                                        <select class="form-select">
+                                            <option value="once">Executar uma vez por dia (No horário acima)</option>
+                                            <option value="1h">Repetir a cada 1 hora</option>
+                                            <option value="6h">Repetir a cada 6 horas</option>
+                                            <option value="12h">Repetir a cada 12 horas</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+                            <div class="mb-3">
+                                <label class="form-label">Notificar por E-mail (Separar por vírgula):</label>
+                                <input type="text" class="form-control" placeholder="gestor@empresa.com">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <button class="btn btn-secondary" id="btnPrev" disabled onclick="changeStep(-1)">Voltar</button>
+                            <button class="btn btn-primary" id="btnNext" onclick="changeStep(1)">Próximo</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-history" class="view-section d-none">
+                <h5>Relatórios Disponíveis</h5>
+                <div class="card shadow-sm mt-3">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light"><tr><th>Job</th><th>Data Geração</th><th>Tamanho</th><th class="text-end">Download</th></tr></thead>
+                        <tbody>
+                            <tr><td>Relatório Vendas</td><td>30/11/2025 14:05</td><td>2.4 MB</td><td class="text-end"><button class="btn btn-sm btn-primary"><i class="fas fa-download"></i> CSV</button></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="view-connections" class="view-section d-none">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5>Conexões de Banco de Dados</h5>
+                    <button class="btn btn-primary" onclick="openConnectionModal('new')"><i class="fas fa-plus"></i> Nova Conexão</button>
+                </div>
+                <div class="card shadow-sm">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light"><tr><th>Nome</th><th>Driver</th><th>Host</th><th>Banco</th><th class="text-end">Ações</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td>Oracle Produção</td><td>Oracle</td><td>192.168.0.50</td><td>DBPROD</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="openConnectionModal('edit')"><i class="fas fa-edit"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="connectionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="connModalTitle">Nova Conexão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nome da Conexão</label>
+                                <input type="text" class="form-control" id="connName" placeholder="Ex: Produção Oracle">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Driver / Tipo</label>
+                                <select class="form-select" id="connDriver">
+                                    <option>PostgreSQL</option>
+                                    <option>Oracle DB</option>
+                                    <option>SQL Server</option>
+                                    <option>MySQL</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Host (IP ou URL)</label>
+                                <input type="text" class="form-control" id="connHost" placeholder="192.168.x.x">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Porta</label>
+                                <input type="number" class="form-control" id="connPort" placeholder="5432">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Nome do Banco (Service Name/DB Name)</label>
+                                <input type="text" class="form-control" id="connDb" placeholder="db_vendas">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Usuário</label>
+                                <input type="text" class="form-control" id="connUser">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Senha</label>
+                                <input type="password" class="form-control" id="connPass">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="alert('Conexão Salva!')">Salvar Conexão</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Confirmar</h5></div><div class="modal-body">Excluir este Job?</div><div class="modal-footer"><button class="btn btn-danger" data-bs-dismiss="modal">Excluir</button></div></div></div></div>
+    <div class="modal fade" id="runModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Executar</h5></div><div class="modal-body">Parametros...</div><div class="modal-footer"><button class="btn btn-success" data-bs-dismiss="modal">Executar</button></div></div></div></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // --- NAVIGATION ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('d-none'));
+            document.getElementById('view-' + tabId).classList.remove('d-none');
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            // Lógica simplificada de active class
+            if(tabId==='dashboard') document.querySelectorAll('.nav-link')[0].classList.add('active');
+            if(tabId==='jobs') document.querySelectorAll('.nav-link')[1].classList.add('active');
+            if(tabId==='history') document.querySelectorAll('.nav-link')[2].classList.add('active');
+            if(tabId==='connections') document.querySelectorAll('.nav-link')[4].classList.add('active');
+        }
+
+        // --- DASHBOARD FILTERS ---
+        function filterDashboard(status, card) {
+            document.querySelectorAll('.stat-card').forEach(el => el.classList.remove('active-filter'));
+            if(card) card.classList.add('active-filter');
+            // Logica de filtro visual (mock)
+            const rows = document.querySelectorAll('#dashboardTable tbody tr');
+            rows.forEach(r => r.style.display = (status === 'all' || r.dataset.status === status) ? '' : 'none');
+        }
+
+        // --- WIZARD LOGIC ---
+        let currentStep = 1;
+        function openWizard(mode) {
+            switchTab('wizard');
+            currentStep = 1;
+            updateWizardUI();
+            document.getElementById('wizardTitle').innerText = (mode === 'edit') ? "Editar Job" : "Criar Novo Job";
+        }
+
+        function changeStep(dir) {
+            currentStep += dir;
+            if(currentStep > 3) { alert('Job Salvo!'); switchTab('jobs'); return; }
+            updateWizardUI();
+        }
+
+        function updateWizardUI() {
+            document.querySelectorAll('.wizard-step').forEach(el => el.classList.add('d-none'));
+            document.getElementById('step' + currentStep).classList.remove('d-none');
+            
+            // Steps Icons
+            for(let i=1; i<=3; i++) {
+                const el = document.getElementById('stepIcon' + i);
+                el.classList.toggle('active', i <= currentStep);
+                el.classList.toggle('bg-light', i > currentStep);
+            }
+
+            // Step 2 Logic (Type toggle)
+            if(currentStep === 2) {
+                const isPy = document.getElementById('typePython').checked;
+                document.getElementById('container-sql').classList.toggle('d-none', isPy);
+                document.getElementById('container-python').classList.toggle('d-none', !isPy);
+            }
+            
+            document.getElementById('btnPrev').disabled = (currentStep === 1);
+            document.getElementById('btnNext').innerText = (currentStep === 3) ? "Salvar" : "Próximo";
+        }
+
+        function validarColunasSQL() {
+            // Simula a validação mostrando a tabela oculta
+            document.getElementById('sqlResultTable').classList.remove('d-none');
+        }
+
+        function toggleSchedule() {
+            const isChecked = document.getElementById('scheduleSwitch').checked;
+            const container = document.getElementById('scheduleOptions');
+            if(isChecked) {
+                container.classList.remove('opacity-50');
+                container.style.pointerEvents = 'auto';
+            } else {
+                container.classList.add('opacity-50');
+                container.style.pointerEvents = 'none';
+            }
+        }
+
+        function addParamRow() {
+            document.getElementById('paramsBody').insertAdjacentHTML('beforeend', `<tr><td><input class="form-control form-control-sm"></td><td><select class="form-select form-select-sm"><option>Txt</option></select></td><td><input class="form-control form-control-sm"></td><td><button class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">X</button></td></tr>`);
+        }
+
+        // --- CONNECTIONS LOGIC (NEW) ---
+        const connModal = new bootstrap.Modal(document.getElementById('connectionModal'));
+        
+        function openConnectionModal(mode) {
+            const title = document.getElementById('connModalTitle');
+            const nameField = document.getElementById('connName');
+            
+            if(mode === 'new') {
+                title.innerText = "Nova Conexão";
+                nameField.value = "";
+                document.getElementById('connHost').value = "";
+                document.getElementById('connDb').value = "";
+            } else {
+                title.innerText = "Editar Conexão";
+                // Simular dados carregados
+                nameField.value = "Oracle Produção";
+                document.getElementById('connHost').value = "192.168.0.50";
+                document.getElementById('connDb').value = "DBPROD";
+            }
+            connModal.show();
+        }
+    </script>
+</body>
+</html>
